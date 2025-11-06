@@ -29,7 +29,7 @@ def duration(filename):
         stderr=subprocess.STDOUT)
     return float(result.stdout)
 
-#splitcode
+# ✅ Fixed split code (no get_duration error)
 def split_large_video(file_path, max_size_mb=1900):
     size_bytes = os.path.getsize(file_path)
     max_bytes = max_size_mb * 1024 * 1024
@@ -37,9 +37,9 @@ def split_large_video(file_path, max_size_mb=1900):
     if size_bytes <= max_bytes:
         return [file_path]  # No splitting needed
 
-    duration = get_duration(file_path)
+    video_duration = duration(file_path)  # ✅ fixed name
     parts = ceil(size_bytes / max_bytes)
-    part_duration = duration / parts
+    part_duration = video_duration / parts
     base_name = file_path.rsplit(".", 1)[0]
     output_files = []
 
@@ -60,14 +60,6 @@ def split_large_video(file_path, max_size_mb=1900):
     return output_files
 
 
-def duration(filename):
-    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
-                             "format=duration", "-of",
-                             "default=noprint_wrappers=1:nokey=1", filename],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT)
-    return float(result.stdout)
-
 def get_mps_and_keys(api_url):
     response = requests.get(api_url)
     response_json = response.json()
@@ -75,17 +67,21 @@ def get_mps_and_keys(api_url):
     keys = response_json.get('KEYS')
     return mpd, keys
    
+
 def exec(cmd):
-        process = subprocess.run(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        output = process.stdout.decode()
-        print(output)
-        return output
-        #err = process.stdout.decode()
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = process.stdout.decode()
+    print(output)
+    return output
+
+
 def pull_run(work, cmds):
     with concurrent.futures.ThreadPoolExecutor(max_workers=work) as executor:
         print("Waiting for tasks to complete")
-        fut = executor.map(exec,cmds)
-async def aio(url,name):
+        fut = executor.map(exec, cmds)
+
+
+async def aio(url, name):
     k = f'{name}.pdf'
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
@@ -96,7 +92,7 @@ async def aio(url,name):
     return k
 
 
-async def download(url,name):
+async def download(url, name):
     ka = f'{name}.pdf'
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
@@ -105,6 +101,7 @@ async def download(url,name):
                 await f.write(await resp.read())
                 await f.close()
     return ka
+
 
 async def pdf_download(url, file_name, chunk_size=1024 * 10):
     if os.path.exists(file_name):
@@ -115,7 +112,7 @@ async def pdf_download(url, file_name, chunk_size=1024 * 10):
             if chunk:
                 fd.write(chunk)
     return file_name   
-   
+
 
 def parse_vid_info(info):
     info = info.strip()
@@ -153,13 +150,7 @@ def vid_info(info):
             try:
                 if "RESOLUTION" not in i[2] and i[2] not in temp and "audio" not in i[2]:
                     temp.append(i[2])
-                    
-                    # temp.update(f'{i[2]}')
-                    # new_info.append((i[2], i[0]))
-                    #  mp4,mkv etc ==== f"({i[1]})" 
-                    
                     new_info.update({f'{i[2]}':f'{i[0]}'})
-
             except:
                 pass
     return new_info
